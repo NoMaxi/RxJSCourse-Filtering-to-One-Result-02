@@ -143,7 +143,7 @@ import { ajax, AjaxResponse } from 'rxjs/ajax';
 // Верните объект, который содержит заголовок, описание и цену полученного продукта.
 // Если соответствующий продукт не найден, верните строку "Продукт не найден".
 // EN: Create an observable using ajax(`https://dummyjson.com/products?limit=100`)
-// Get the first product form 'laptops' category which rating is higer than 4.5.
+// Get the first product form 'laptops' category which rating is higher than 4.5.
 // Return an object that contains the title, description, and price of the received product.
 // If corresponding product was not found, return 'Product not found' string.
 (function task6() {
