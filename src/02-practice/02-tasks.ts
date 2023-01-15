@@ -1,6 +1,29 @@
 import { addItem, run } from './../03-utils';
-import { from, fromEvent, of, first, last, elementAt, min, max, find, findIndex, single, map, tap, catchError, EMPTY, ignoreElements, merge, throwError, mergeWith } from 'rxjs';
-import { ajax } from 'rxjs/ajax';
+import {
+    from,
+    fromEvent,
+    of,
+    first,
+    last,
+    elementAt,
+    min,
+    max,
+    find,
+    findIndex,
+    single,
+    map,
+    tap,
+    catchError,
+    EMPTY,
+    ignoreElements,
+    merge,
+    throwError,
+    mergeWith,
+    concatMap,
+    distinct,
+    take, filter
+} from 'rxjs';
+import { ajax, AjaxResponse } from 'rxjs/ajax';
 
 // Task 1. first()
 // RU: Создайте поток объектов с двумя свойствами: action и priority
@@ -8,7 +31,12 @@ import { ajax } from 'rxjs/ajax';
 // EN: Create an observable of objects with two properties: action and priority
 // Get the first object from the observable with the high priority
 (function task1(): void {
-    // const stream$ = 
+    const stream$ = from([
+        { action: 'Create', priority: 'Low' },
+        { action: 'Delete', priority: 'High' }
+    ]).pipe(
+        first(obj => obj.priority === 'High')
+    );
 
     // run(stream$);
 })();
@@ -19,8 +47,11 @@ import { ajax } from 'rxjs/ajax';
 // EN: Create an observable of words from the sentence 'A soft word does not break bones'. 
 // Get the last word that contains 6 characters
 (function task2(): void {
-    // const stream$ = 
-    
+    const str = 'A soft word does not break bones';
+    const stream$ = from(str.split(' ')).pipe(
+        last(word => word.length === 6, 'No words found')
+    );
+
     // run(stream$);
 })();
 
@@ -29,9 +60,11 @@ import { ajax } from 'rxjs/ajax';
 // RU: Создайте поток событий клик по документу. Получите второй объект события клик.
 // EN: Create an observable of document click event. Get the second click event object.
 (function task3(): void {
-    // const stream$ = 
-    
-    // run(stream$, { outputMethod: "console"});
+    const stream$ = fromEvent(document, 'click').pipe(
+        elementAt(1)
+    );
+
+    // run(stream$, { outputMethod: "console" });
 })();
 
 // Task 4. min() (Vitalii Puzakov)
@@ -40,7 +73,16 @@ import { ajax } from 'rxjs/ajax';
 // EN: Create an observable of words from the sentence 'A soft word does not break bones'. 
 // Find the minimum length of a word in a sentence.
 (function task4() {
-    // const source$ = 
+    const str = 'A soft word does not break bones';
+    const stream$ = from(str.split(' ')).pipe(
+        map(word => word.length),
+        min()
+    );
+
+    // To find a word with minimum length:
+    // const stream$ = from(str.split(" ")).pipe(
+    //     min((a, b) => a.length < b.length ? -1 : 1)
+    // );
 
     // run(stream$);
 })();
@@ -52,23 +94,28 @@ import { ajax } from 'rxjs/ajax';
 // EN: Let's we have a list of projects with started date and name 
 // We want to get the name of the most recent(latest) started project
 (function task5() {
-    const source$ = from([{
-        dateStart: "2020-04-13T00:00:00",
-        ProjectId: "1",
-        ProjectName: "First",
-      },
-      {
-        dateStart: "2020-07-05T00:00:00",
-        ProjectId: "2",
-        ProjectName: "Second",
-      },
-      {
-        dateStart: "2020-06-04T00:00:00",
-        ProjectId: "3",
-        ProjectName: "Third",
-      }]);
+    const source$ = from([
+        {
+            dateStart: '2020-04-13T00:00:00',
+            ProjectId: '1',
+            ProjectName: 'First',
+        },
+        {
+            dateStart: '2020-07-05T00:00:00',
+            ProjectId: '2',
+            ProjectName: 'Second',
+        },
+        {
+            dateStart: '2020-06-04T00:00:00',
+            ProjectId: '3',
+            ProjectName: 'Third',
+        }
+    ]);
 
-    // const stream$ = 
+    const stream$ = source$.pipe(
+        max((a, b) => new Date(a.dateStart) < new Date(b.dateStart) ? -1 : 1),
+        map(obj => obj.ProjectName)
+    );
 
     // run(stream$);
 })();
@@ -79,9 +126,15 @@ import { ajax } from 'rxjs/ajax';
 // EN: Create an observable using ajax(`https://jsonplaceholder.typicode.com/users`)
 // Get the first user whose email ends with 'biz'
 (function task6() {
-    // const stream$ = 
+    const stream$ = ajax('https://jsonplaceholder.typicode.com/users')
+        .pipe(
+            map(obj => obj.response),
+            concatMap((arr: any) => from(arr)),
+            find(user => user['email'].endsWith('.biz'))
+        )
+    ;
 
-    // run(stream$);
+    // run(stream$, { outputMethod: "console" });
 })();
 
 // Task7. findIndex()
@@ -90,7 +143,14 @@ import { ajax } from 'rxjs/ajax';
 // EN: Create an observable of object with two properties: id, name.
 // Get the number of the object in the stream whose name is longer than 10 characters
 (function task7() {
-    // const stream$ = 
+    const stream$ = from([
+        { id: '1', name: 'Microsoft' },
+        { id: '2', name: 'EPAM' },
+        { id: '3', name: 'London Stock Exchange Group' },
+        { id: '4', name: 'Facebook' }
+    ]).pipe(
+        findIndex(obj => obj.name.length > 10)
+    );
 
     // run(stream$);
 })();
@@ -103,8 +163,17 @@ import { ajax } from 'rxjs/ajax';
 // have the same title values
 // Get the object with title = 'Learn RxJS' if it's the only one object in the stream
 (function task8() {
-    // const stream$ = 
-    
+    const searchedTitle = 'Learn RxJS';
+    const stream$ = from([
+        { title: 'Learn JS', priority: 'High' },
+        { title: 'Learn React', priority: 'Low' },
+        { title: 'Learn React', priority: 'Low' },
+        { title: searchedTitle, priority: 'Medium' },
+        { title: 'Learn Angular', priority: 'Medium' }
+    ]).pipe(
+        single(obj => obj.title === searchedTitle)
+    );
+
     // run(stream$);
 })();
 
@@ -130,9 +199,25 @@ import { ajax } from 'rxjs/ajax';
 // Use: ajax, of, mergeWith, tap, catchError, EMPTY
 // Replace the ajax function with of and watch the result
 (function task9() {
-    // const stream$ = 
+    const successMessage = 'User successfully logged out on all subdomains';
+    const errorMessage = 'Failed to logout user on all subdomains';
 
-    // run(stream$);
+    // Real URLs to check the program functionality
+    // const logout1$ = ajax("https://jsonplaceholder.typicode.com/users");
+    // const logout2$ = ajax("https://jsonplaceholder.typicode.com/todos");
+    // const logout3$ = ajax("https://jsonplaceholder.typicode.com/posts");
+    const logout1$ = ajax('https://app.com/logout');
+    const logout2$ = ajax('https://mail.app.com/logout');
+    const logout3$ = ajax('https://research.app.com/logout');
+    const stream$ = logout1$.pipe(
+        mergeWith(logout2$, logout3$),
+        ignoreElements(),
+        catchError(() => {
+            throw errorMessage;
+        })
+    );
+
+    // run(stream$, { complete: successMessage });
 })();
 
 export function runner() {}
