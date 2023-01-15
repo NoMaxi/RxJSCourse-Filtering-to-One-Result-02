@@ -137,6 +137,52 @@ import { ajax, AjaxResponse } from 'rxjs/ajax';
     // run(stream$, { outputMethod: "console" });
 })();
 
+// Task 6. find() (Maksym Novik)
+// RU: Создайте поток, используя ajax(`https://dummyjson.com/products?limit=100`)
+// Получите первый продукт из категории 'laptops', у которого рейтинг выше 4.5.
+// Верните объект, который содержит заголовок, описание и цену полученного продукта.
+// Если соответствующий продукт не найден, верните строку "Продукт не найден".
+// EN: Create an observable using ajax(`https://dummyjson.com/products?limit=100`)
+// Get the first product form 'laptops' category which rating is higer than 4.5.
+// Return an object that contains the title, description, and price of the received product.
+// If corresponding product was not found, return 'Product not found' string.
+(function task6() {
+    type Product = {
+        id: number,
+        title: string,
+        description: string,
+        price: number,
+        discountPercentage: number,
+        rating: number,
+        stock: number,
+        brand: string,
+        category: string,
+        thumbnail: string,
+        images: string[]
+    };
+    type ProductsResponse = {
+        products: Product[],
+        total: number,
+        skip: number
+        limit: number,
+    }
+    const stream$ = ajax('https://dummyjson.com/products?limit=100')
+        .pipe(
+            map((obj: AjaxResponse<ProductsResponse>) => obj.response.products),
+            concatMap(products => from(products)),
+            find(({ category, rating }) => category === 'laptops' && rating >= 4.9),
+            map((product) => {
+                if (!product) {
+                    return 'Product not found';
+                }
+                const { title, description, price } = product;
+                return { title, description, price };
+            })
+        );
+
+    run(stream$, { outputMethod: "console" });
+})();
+
 // Task7. findIndex()
 // RU: Создайте поток объектов с двумя свойствами: id, name.
 // Получите номер объекта в потоке, у которого длина name больше 10 символов  
