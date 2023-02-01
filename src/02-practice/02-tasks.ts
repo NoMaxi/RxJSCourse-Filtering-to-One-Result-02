@@ -20,8 +20,6 @@ import {
     throwError,
     mergeWith,
     concatMap,
-    distinct,
-    take, filter
 } from 'rxjs';
 import { ajax, AjaxResponse } from 'rxjs/ajax';
 
@@ -180,7 +178,7 @@ import { ajax, AjaxResponse } from 'rxjs/ajax';
             })
         );
 
-    run(stream$, { outputMethod: "console" });
+    // run(stream$, { outputMethod: 'console' });
 })();
 
 // Task7. findIndex()
@@ -255,15 +253,19 @@ import { ajax, AjaxResponse } from 'rxjs/ajax';
     const logout1$ = ajax('https://app.com/logout');
     const logout2$ = ajax('https://mail.app.com/logout');
     const logout3$ = ajax('https://research.app.com/logout');
-    const stream$ = logout1$.pipe(
-        mergeWith(logout2$, logout3$),
-        ignoreElements(),
-        catchError(() => {
-            throw errorMessage;
-        })
-    );
+    const stream$ = logout1$
+        .pipe(
+            mergeWith(logout2$, logout3$))
+        .pipe(
+            ignoreElements(),
+            tap({
+                error: () => addItem(errorMessage),
+                complete: () => addItem(successMessage)
+            }),
+            catchError(() => EMPTY)
+        );
 
-    // run(stream$, { complete: successMessage });
+    run(stream$);
 })();
 
 export function runner() {}
